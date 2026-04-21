@@ -205,12 +205,8 @@ async function convertWithCloudConvert(inputPath, originalFilename, targetFormat
 async function saveHistoryToXano(payload) {
   try {
     await axios.post(`${XANO_BASE}/callback`, {
-      payload: {
-        job: {
-          ...payload,
-          converted_at: new Date().toISOString()
-        }
-      }
+      ...payload,
+      converted_at: new Date().toISOString()
     }, { headers: { 'Content-Type': 'application/json' }, timeout: 6000 });
   } catch (err) {
     const xanoDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
