@@ -7,12 +7,35 @@ const path       = require('path');
 const fs         = require('fs');
 const axios      = require('axios');
 const FormData   = require('form-data');
+const { Pool }   = require('pg');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 const CC_API       = 'https://api.cloudconvert.com/v2';
 const HISTORY_FILE = path.join(__dirname, 'history.json');
+
+// ── PostgreSQL ─────────────────────────────────────────────────────────────────
+const db = process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  : null;
+
+async function initDb() {
+  if (!db) return;
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS history (
+      id          SERIAL PRIMARY KEY,
+      status      TEXT,
+      original_filename TEXT,
+      source_format     TEXT,
+      target_format     TEXT,
+      file_size_bytes   BIGINT,
+      error       TEXT,
+      converted_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  console.log('PostgreSQL : ✓ таблица history готова');
+}
 
 // ── Directories ────────────────────────────────────────────────────────────────
 const UPLOADS_DIR   = path.join(__dirname, 'uploads');
@@ -91,13 +114,13 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
     jobs[jobId].status   = 'done';
     jobs[jobId].progress = 100;
     console.log(`[OK] Job ${jobId} done → ${jobs[jobId].outputFilename}`);
-    saveHistory({ status: 'success', originalFilename: req.file.originalname,
+    await saveHistory({ status: 'success', originalFilename: req.file.originalname,
       sourceFormat: srcExt.replace('.', ''), targetFormat, fileSizeBytes: req.file.size });
   } catch (err) {
     jobs[jobId].status = 'error';
     jobs[jobId].error  = err.message;
     console.error(`[ERR] Job ${jobId} failed: ${err.message}`);
-    saveHistory({ status: 'error', originalFilename: req.file.originalname,
+    await saveHistory({ status: 'error', originalFilename: req.file.originalname,
       sourceFormat: srcExt.replace('.', ''), targetFormat, fileSizeBytes: req.file.size, error: err.message });
   } finally {
     cleanup(req.file.path);
@@ -126,8 +149,14 @@ app.get('/api/download/:jobId', (req, res) => {
 app.get('/api/formats', (req, res) => res.json(FORMATS));
 
 // ── GET /api/history ──────────────────────────────────────────────────────────
-app.get('/api/history', (req, res) => {
+app.get('/api/history', async (req, res) => {
   try {
+    if (db) {
+      const { rows } = await db.query(
+        'SELECT * FROM history ORDER BY converted_at DESC LIMIT 200'
+      );
+      return res.json(rows);
+    }
     const data = fs.existsSync(HISTORY_FILE)
       ? JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'))
       : [];
@@ -202,10 +231,19 @@ async function convertWithCloudConvert(inputPath, originalFilename, targetFormat
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// History — save to JSON file
+// History — PostgreSQL или JSON-файл
 // ══════════════════════════════════════════════════════════════════════════════
-function saveHistory(payload) {
+async function saveHistory(payload) {
   try {
+    if (db) {
+      await db.query(
+        `INSERT INTO history (status, original_filename, source_format, target_format, file_size_bytes, error)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [payload.status, payload.originalFilename, payload.sourceFormat,
+         payload.targetFormat, payload.fileSizeBytes, payload.error || null]
+      );
+      return;
+    }
     const history = fs.existsSync(HISTORY_FILE)
       ? JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'))
       : [];
@@ -233,8 +271,10 @@ setInterval(() => {
 }, 3600000);
 
 // ── Start ──────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\nMediaConverter → http://localhost:${PORT}`);
-  console.log(`CloudConvert : ${process.env.CLOUDCONVERT_API_KEY ? '✓' : '✗ ключ не задан'}`);
-  console.log(`History      : ${HISTORY_FILE}\n`);
+initDb().catch(err => console.error('[DB] init error:', err.message)).finally(() => {
+  app.listen(PORT, () => {
+    console.log(`\nMediaConverter → http://localhost:${PORT}`);
+    console.log(`CloudConvert : ${process.env.CLOUDCONVERT_API_KEY ? '✓' : '✗ ключ не задан'}`);
+    console.log(`History      : ${db ? 'PostgreSQL' : HISTORY_FILE}\n`);
+  });
 });
