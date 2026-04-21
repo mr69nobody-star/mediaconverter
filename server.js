@@ -11,8 +11,8 @@ const FormData   = require('form-data');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-const CC_API    = 'https://api.cloudconvert.com/v2';
-const XANO_BASE = process.env.XANO_BASE_URL;
+const CC_API       = 'https://api.cloudconvert.com/v2';
+const HISTORY_FILE = path.join(__dirname, 'history.json');
 
 // ── Directories ────────────────────────────────────────────────────────────────
 const UPLOADS_DIR   = path.join(__dirname, 'uploads');
@@ -91,13 +91,13 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
     jobs[jobId].status   = 'done';
     jobs[jobId].progress = 100;
     console.log(`[OK] Job ${jobId} done → ${jobs[jobId].outputFilename}`);
-    saveHistoryToXano({ status: 'success', originalFilename: req.file.originalname,
+    saveHistory({ status: 'success', originalFilename: req.file.originalname,
       sourceFormat: srcExt.replace('.', ''), targetFormat, fileSizeBytes: req.file.size });
   } catch (err) {
     jobs[jobId].status = 'error';
     jobs[jobId].error  = err.message;
     console.error(`[ERR] Job ${jobId} failed: ${err.message}`);
-    saveHistoryToXano({ status: 'error', originalFilename: req.file.originalname,
+    saveHistory({ status: 'error', originalFilename: req.file.originalname,
       sourceFormat: srcExt.replace('.', ''), targetFormat, fileSizeBytes: req.file.size, error: err.message });
   } finally {
     cleanup(req.file.path);
@@ -126,12 +126,14 @@ app.get('/api/download/:jobId', (req, res) => {
 app.get('/api/formats', (req, res) => res.json(FORMATS));
 
 // ── GET /api/history ──────────────────────────────────────────────────────────
-app.get('/api/history', async (req, res) => {
+app.get('/api/history', (req, res) => {
   try {
-    const { data } = await axios.get(`${XANO_BASE}/callback`, { timeout: 5000 });
+    const data = fs.existsSync(HISTORY_FILE)
+      ? JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'))
+      : [];
     res.json(data);
-  } catch (err) {
-    res.status(502).json({ error: 'Не удалось получить историю из Xano', detail: err.message });
+  } catch {
+    res.json([]);
   }
 });
 
@@ -200,19 +202,18 @@ async function convertWithCloudConvert(inputPath, originalFilename, targetFormat
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Xano — save history
+// History — save to JSON file
 // ══════════════════════════════════════════════════════════════════════════════
-async function saveHistoryToXano(payload) {
-  if (!XANO_BASE) { console.error('[Xano] XANO_BASE_URL не задан, пропускаем сохранение'); return; }
-  const body = { job: { ...payload, converted_at: new Date().toISOString() } };
-  console.log(`[Xano] POST ${XANO_BASE}/callback`, JSON.stringify(body));
+function saveHistory(payload) {
   try {
-    const resp = await axios.post(`${XANO_BASE}/callback`, body,
-      { headers: { 'Content-Type': 'application/json' }, timeout: 6000 });
-    console.log(`[Xano] OK ${resp.status}`);
+    const history = fs.existsSync(HISTORY_FILE)
+      ? JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'))
+      : [];
+    history.unshift({ ...payload, converted_at: new Date().toISOString() });
+    if (history.length > 200) history.splice(200);
+    fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
   } catch (err) {
-    const xanoDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-    console.error(`[Xano] save error: ${err.response?.status} — ${xanoDetail}`);
+    console.error('[History] save error:', err.message);
   }
 }
 
@@ -235,5 +236,5 @@ setInterval(() => {
 app.listen(PORT, () => {
   console.log(`\nMediaConverter → http://localhost:${PORT}`);
   console.log(`CloudConvert : ${process.env.CLOUDCONVERT_API_KEY ? '✓' : '✗ ключ не задан'}`);
-  console.log(`Xano         : ${XANO_BASE || '✗ URL не задан'}\n`);
+  console.log(`History      : ${HISTORY_FILE}\n`);
 });
