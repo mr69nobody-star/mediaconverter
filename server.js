@@ -59,7 +59,9 @@ const jobs = {};
 app.post('/api/convert', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
 
-  const { targetFormat } = req.body;
+  const { targetFormat, conversionParams: conversionParamsRaw } = req.body;
+  let conversionParams = {};
+  try { if (conversionParamsRaw) conversionParams = JSON.parse(conversionParamsRaw); } catch {}
   if (!targetFormat) { cleanup(req.file.path); return res.status(400).json({ error: 'Не указан целевой формат' }); }
 
   const srcExt  = path.extname(req.file.originalname).toLowerCase();
@@ -87,7 +89,7 @@ app.post('/api/convert', upload.single('file'), async (req, res) => {
 
   // async conversion
   try {
-    await convertWithCloudConvert(req.file.path, req.file.originalname, targetFormat, jobId);
+    await convertWithCloudConvert(req.file.path, req.file.originalname, targetFormat, jobId, conversionParams);
     jobs[jobId].status   = 'done';
     jobs[jobId].progress = 100;
     console.log(`[OK] Job ${jobId} done → ${jobs[jobId].outputFilename}`);
@@ -140,7 +142,7 @@ app.get('/api/history', (req, res) => {
 // ══════════════════════════════════════════════════════════════════════════════
 // CloudConvert
 // ══════════════════════════════════════════════════════════════════════════════
-async function convertWithCloudConvert(inputPath, originalFilename, targetFormat, jobId) {
+async function convertWithCloudConvert(inputPath, originalFilename, targetFormat, jobId, conversionParams = {}) {
   const headers = { Authorization: `Bearer ${process.env.CLOUDCONVERT_API_KEY}` };
 
   console.log(`[CC] Creating job: ${originalFilename} → ${targetFormat}`);
@@ -149,7 +151,7 @@ async function convertWithCloudConvert(inputPath, originalFilename, targetFormat
     const resp = await axios.post(`${CC_API}/jobs`, {
       tasks: {
         'upload':  { operation: 'import/upload' },
-        'convert': { operation: 'convert',    input: ['upload'], output_format: targetFormat },
+        'convert': { operation: 'convert',    input: ['upload'], output_format: targetFormat, ...conversionParams },
         'export':  { operation: 'export/url', input: ['convert'] }
       }
     }, { headers });

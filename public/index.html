@@ -63,6 +63,121 @@
         <p class="section-label">Конвертировать в:</p>
         <div class="fmt-grid" id="fmtGrid"></div>
 
+        <div class="params-toggle-row">
+          <button class="btn-params-toggle" id="paramsToggleBtn">⚙ Параметры конвертации</button>
+        </div>
+
+        <div class="params-panel hidden" id="paramsPanel">
+
+          <!-- Video -->
+          <div class="params-group hidden" id="paramsVideo">
+            <div class="params-row">
+              <label class="params-label">Видеокодек</label>
+              <select class="params-select" id="pVideoCodec">
+                <option value="">Авто</option>
+                <option value="h264">H.264</option>
+                <option value="h265">H.265 / HEVC</option>
+                <option value="vp9">VP9</option>
+                <option value="vp8">VP8</option>
+              </select>
+            </div>
+            <div class="params-row">
+              <label class="params-label">Видеобитрейт (kbps)</label>
+              <input class="params-input" type="number" id="pVideoBitrate" placeholder="Авто" min="100" max="50000" step="100">
+            </div>
+            <div class="params-row">
+              <label class="params-label">Разрешение (px)</label>
+              <div class="params-dims">
+                <input class="params-input" type="number" id="pWidth" placeholder="Ширина">
+                <span class="params-x">×</span>
+                <input class="params-input" type="number" id="pHeight" placeholder="Высота">
+              </div>
+            </div>
+            <div class="params-row">
+              <label class="params-label">FPS</label>
+              <select class="params-select" id="pFps">
+                <option value="">Авто</option>
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+              </select>
+            </div>
+            <div class="params-row">
+              <label class="params-label">Аудиобитрейт (kbps)</label>
+              <select class="params-select" id="pVideoAudioBitrate">
+                <option value="">Авто</option>
+                <option value="64">64</option>
+                <option value="128">128</option>
+                <option value="192">192</option>
+                <option value="256">256</option>
+                <option value="320">320</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Audio -->
+          <div class="params-group hidden" id="paramsAudio">
+            <div class="params-row">
+              <label class="params-label">Битрейт (kbps)</label>
+              <select class="params-select" id="pAudioBitrate">
+                <option value="">Авто</option>
+                <option value="64">64</option>
+                <option value="96">96</option>
+                <option value="128">128</option>
+                <option value="192">192</option>
+                <option value="256">256</option>
+                <option value="320">320</option>
+              </select>
+            </div>
+            <div class="params-row">
+              <label class="params-label">Частота (Гц)</label>
+              <select class="params-select" id="pAudioFreq">
+                <option value="">Авто</option>
+                <option value="22050">22 050</option>
+                <option value="44100">44 100</option>
+                <option value="48000">48 000</option>
+              </select>
+            </div>
+            <div class="params-row">
+              <label class="params-label">Каналы</label>
+              <select class="params-select" id="pAudioChannels">
+                <option value="">Авто</option>
+                <option value="1">Моно</option>
+                <option value="2">Стерео</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Image -->
+          <div class="params-group hidden" id="paramsImage">
+            <div class="params-row">
+              <label class="params-label">Качество (1–100)</label>
+              <input type="range" class="params-range" id="pQuality" min="1" max="100" value="85">
+              <span class="params-quality-val" id="pQualityVal">85</span>
+            </div>
+            <div class="params-row">
+              <label class="params-label">Размер (px)</label>
+              <div class="params-dims">
+                <input class="params-input" type="number" id="pImgWidth" placeholder="Ширина">
+                <span class="params-x">×</span>
+                <input class="params-input" type="number" id="pImgHeight" placeholder="Высота">
+              </div>
+            </div>
+            <div class="params-row">
+              <label class="params-label">Масштабирование</label>
+              <select class="params-select" id="pFit">
+                <option value="">Авто</option>
+                <option value="scale">Scale (пропорционально)</option>
+                <option value="cover">Cover (заполнить)</option>
+                <option value="contain">Contain (вписать)</option>
+                <option value="crop">Crop (обрезать)</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
         <button class="btn btn-primary btn-wide" id="convertBtn">Конвертировать</button>
       </div>
 

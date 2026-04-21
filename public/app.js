@@ -32,6 +32,11 @@ const historyToggleBtn = document.getElementById('historyToggleBtn');
 const historyCard      = document.getElementById('historyCard');
 const historyBody      = document.getElementById('historyBody');
 const historyRefreshBtn = document.getElementById('historyRefreshBtn');
+const paramsToggleBtn  = document.getElementById('paramsToggleBtn');
+const paramsPanel      = document.getElementById('paramsPanel');
+const paramsVideo      = document.getElementById('paramsVideo');
+const paramsAudio      = document.getElementById('paramsAudio');
+const paramsImage      = document.getElementById('paramsImage');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let selectedFile   = null;
@@ -83,6 +88,12 @@ function loadFile(file) {
     fmtGrid.appendChild(chip);
   });
 
+  // show correct params group
+  [paramsVideo, paramsAudio, paramsImage].forEach(g => g.classList.add('hidden'));
+  ({ video: paramsVideo, audio: paramsAudio, image: paramsImage })[t]?.classList.remove('hidden');
+  paramsPanel.classList.add('hidden');
+  paramsToggleBtn.classList.remove('active');
+
   showSection('convert');
 }
 
@@ -111,6 +122,7 @@ convertBtn.addEventListener('click', async () => {
   const fd = new FormData();
   fd.append('file', selectedFile);
   fd.append('targetFormat', selectedFormat);
+  fd.append('conversionParams', JSON.stringify(collectParams()));
 
   let res;
   try {
@@ -170,6 +182,8 @@ function resetAll() {
   selectedFormat = null;
   currentJobId   = null;
   fileInput.value = '';
+  paramsPanel.classList.add('hidden');
+  paramsToggleBtn.classList.remove('active');
   showSection('drop');
 }
 
@@ -187,6 +201,52 @@ function showError(msg) {
   stopPolling();
   errorMsg.textContent = msg;
   showSection('error');
+}
+
+// ── Params toggle ────────────────────────────────────────────────────────────
+paramsToggleBtn.addEventListener('click', () => {
+  paramsPanel.classList.toggle('hidden');
+  paramsToggleBtn.classList.toggle('active', !paramsPanel.classList.contains('hidden'));
+});
+
+document.getElementById('pQuality').addEventListener('input', e => {
+  document.getElementById('pQualityVal').textContent = e.target.value;
+});
+
+function collectParams() {
+  if (paramsPanel.classList.contains('hidden')) return {};
+  const t = fileType(ext(selectedFile.name));
+  const p = {};
+  if (t === 'video') {
+    const vc  = document.getElementById('pVideoCodec').value;
+    const vb  = document.getElementById('pVideoBitrate').value;
+    const w   = document.getElementById('pWidth').value;
+    const h   = document.getElementById('pHeight').value;
+    const fps = document.getElementById('pFps').value;
+    const ab  = document.getElementById('pVideoAudioBitrate').value;
+    if (vc)  p.video_codec    = vc;
+    if (vb)  p.video_bitrate  = parseInt(vb);
+    if (w)   p.width          = parseInt(w);
+    if (h)   p.height         = parseInt(h);
+    if (fps) p.fps            = parseInt(fps);
+    if (ab)  p.audio_bitrate  = parseInt(ab);
+  } else if (t === 'audio') {
+    const ab = document.getElementById('pAudioBitrate').value;
+    const af = document.getElementById('pAudioFreq').value;
+    const ac = document.getElementById('pAudioChannels').value;
+    if (ab) p.audio_bitrate   = parseInt(ab);
+    if (af) p.audio_frequency = parseInt(af);
+    if (ac) p.audio_channels  = parseInt(ac);
+  } else if (t === 'image') {
+    const w   = document.getElementById('pImgWidth').value;
+    const h   = document.getElementById('pImgHeight').value;
+    const fit = document.getElementById('pFit').value;
+    p.quality = parseInt(document.getElementById('pQuality').value);
+    if (w)   p.width  = parseInt(w);
+    if (h)   p.height = parseInt(h);
+    if (fit) p.fit    = fit;
+  }
+  return p;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
