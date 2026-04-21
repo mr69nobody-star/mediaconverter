@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediaConverter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="container header-row">
+      <div class="logo">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+          <rect width="34" height="34" rx="9" fill="url(#lg)"/>
+          <path d="M11 24V10l16 7-16 7z" fill="#fff"/>
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="34" y2="34">
+              <stop stop-color="#6366f1"/>
+              <stop offset="1" stop-color="#8b5cf6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <span>MediaConverter</span>
+      </div>
+      <button class="btn btn-ghost" id="historyToggleBtn">История конвертаций</button>
+    </div>
+  </header>
+
+  <main class="main container">
+
+    <!-- CONVERTER CARD -->
+    <section class="card" id="converterCard">
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <circle cx="26" cy="26" r="26" fill="#ede9fe"/>
+            <path d="M26 16v12m0 0-5-5m5 5 5-5" stroke="#7c3aed" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 36h20" stroke="#7c3aed" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="drop-title">Перетащите файл сюда</p>
+        <p class="drop-sub">или</p>
+        <label class="btn btn-primary" for="fileInput">Выбрать файл</label>
+        <input type="file" id="fileInput" hidden
+          accept="video/*,audio/*,image/*,.mkv,.flac,.ogg,.webm,.bmp,.tiff,.svg" />
+        <p class="drop-hint">Видео · Аудио · Изображения &nbsp;|&nbsp; до 500 МБ</p>
+      </div>
+
+      <!-- File + format selector (hidden until file chosen) -->
+      <div class="convert-panel hidden" id="convertPanel">
+        <div class="file-row">
+          <span class="file-emoji" id="fileEmoji">🎬</span>
+          <div class="file-info">
+            <p class="file-name" id="fileName"></p>
+            <p class="file-meta" id="fileMeta"></p>
+          </div>
+          <button class="btn-icon" id="clearBtn" title="Убрать файл">✕</button>
+        </div>
+
+        <p class="section-label">Конвертировать в:</p>
+        <div class="fmt-grid" id="fmtGrid"></div>
+
+        <button class="btn btn-primary btn-wide" id="convertBtn">Конвертировать</button>
+      </div>
+
+      <!-- Progress (hidden until conversion starts) -->
+      <div class="progress-wrap hidden" id="progressWrap">
+        <p class="progress-label">Конвертация через CloudConvert…</p>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-pct" id="progressPct">0%</p>
+      </div>
+
+      <!-- Done -->
+      <div class="result-wrap hidden" id="resultWrap">
+        <div class="result-icon">✅</div>
+        <p class="result-title">Готово!</p>
+        <p class="result-name" id="resultName"></p>
+        <div class="result-actions">
+          <button class="btn btn-primary" id="downloadBtn">Скачать</button>
+          <button class="btn btn-ghost" id="newBtn">Конвертировать ещё</button>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="result-wrap hidden" id="errorWrap">
+        <div class="result-icon">❌</div>
+        <p class="result-title error-text">Ошибка</p>
+        <p class="result-name" id="errorMsg"></p>
+        <button class="btn btn-ghost" id="retryBtn">Попробовать снова</button>
+      </div>
+    </section>
+
+    <!-- FORMATS REFERENCE -->
+    <section class="card formats-card">
+      <h2 class="card-title">Поддерживаемые форматы</h2>
+      <div class="fmt-legend">
+        <div class="fmt-leg-row"><span class="badge video">Видео</span><span>MP4, AVI, MOV, MKV, WebM</span></div>
+        <div class="fmt-leg-row"><span class="badge audio">Аудио</span><span>MP3, WAV, OGG, FLAC, AAC, M4A</span></div>
+        <div class="fmt-leg-row"><span class="badge image">Изображения</span><span>JPG, PNG, GIF, BMP, TIFF, SVG, WebP</span></div>
+      </div>
+    </section>
+
+    <!-- HISTORY PANEL -->
+    <section class="card history-card hidden" id="historyCard">
+      <div class="history-header">
+        <h2 class="card-title">История конвертаций</h2>
+        <button class="btn btn-ghost btn-sm" id="historyRefreshBtn">Обновить</button>
+      </div>
+      <div id="historyBody">
+        <p class="history-empty">Загрузка…</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container">MediaConverter &copy; 2026 &nbsp;·&nbsp; CloudConvert + Xano</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
