@@ -3,7 +3,7 @@
 const FORMATS = {
   video: ['mp4', 'avi', 'mov', 'mkv', 'webm'],
   audio: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'],
-  image: ['jpg', 'png', 'gif', 'bmp', 'tiff', 'svg', 'webp']
+  image: ['jpg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 };
 
 const EMOJIS = { video: '🎬', audio: '🎵', image: '🖼️' };

@@ -32,7 +32,7 @@ const upload = multer({
   }),
   limits: { fileSize: 500 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const ok = /\.(mp4|avi|mov|mkv|webm|mp3|wav|ogg|flac|aac|m4a|jpg|jpeg|png|gif|bmp|tiff|svg)$/i;
+    const ok = /\.(mp4|avi|mov|mkv|webm|mp3|wav|ogg|flac|aac|m4a|jpg|jpeg|png|gif|bmp|tiff)$/i;
     ok.test(path.extname(file.originalname)) ? cb(null, true) : cb(new Error('Неподдерживаемый формат'));
   }
 });
@@ -41,7 +41,7 @@ const upload = multer({
 const FORMATS = {
   video: ['mp4', 'avi', 'mov', 'mkv', 'webm'],
   audio: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'],
-  image: ['jpg', 'png', 'gif', 'bmp', 'tiff', 'svg', 'webp']
+  image: ['jpg', 'png', 'gif', 'bmp', 'tiff', 'webp']
 };
 
 function getType(ext) {
